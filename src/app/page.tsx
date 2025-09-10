@@ -32,7 +32,9 @@ const Home = () => {
   const [filterPriority, setFilterPriority] = useState<TPriority | undefined>(
     undefined
   );
-  const [selectPriority, setSelectPriority] = useState<TPriority | ''>('');
+  const [selectPriority, setSelectPriority] = useState<TPriority | 'all'>(
+    'all'
+  );
   useEffect(() => {
     dispatch(
       fetchAllList({
@@ -46,8 +48,10 @@ const Home = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (selectPriority === '') {
+    if (selectPriority === 'all') {
       setFilterPriority(undefined);
+    } else {
+      setFilterPriority(selectPriority);
     }
   }, [selectPriority]);
 
@@ -91,7 +95,10 @@ const Home = () => {
             />
           </div>
           {/* Priority */}
-          <Select onValueChange={(e: TPriority) => setSelectPriority(e)}>
+          <Select
+            onValueChange={(e: TPriority) => setSelectPriority(e)}
+            value={selectPriority}
+          >
             <SelectTrigger className='flex cursor-pointer flex-row items-center gap-3 rounded-2xl border border-neutral-900 px-3 py-3.5 hover:bg-neutral-900 dark:bg-transparent'>
               <FilterIcon size={20} />
               <div> Priority</div>
