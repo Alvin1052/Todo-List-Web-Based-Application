@@ -1,103 +1,140 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { SelectGroup } from '@radix-ui/react-select';
+import { TabsContent, TabsList } from '@radix-ui/react-tabs';
+import { FilterIcon, MoonIcon, Search, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from '@/components/ui/select';
+import { Tabs, TabsTrigger } from '@/components/ui/tabs';
+
+import { priorityLevel } from '@/constant/listPriority';
+import { fetchAllList } from '@/features/todos/todolistSlice/todoslistSlice';
+import CompletedTabs from '@/partials/completed';
+import TodayTabs from '@/partials/today';
+import UpcomingTabs from '@/partials/upcoming';
+import { TPriority } from '@/types/todoTypes';
+
+import { useAppDispatch, useAppSelector } from './hooks';
+
+const Home = () => {
+  const { setTheme } = useTheme();
+  const { todos } = useAppSelector((state) => state.todos);
+  const dispatch = useAppDispatch();
+
+  const [search, setSearch] = useState<string>('');
+  const [filterPriority, setFilterPriority] = useState<TPriority | undefined>(
+    undefined
+  );
+
+  useEffect(() => {
+    dispatch(
+      fetchAllList({
+        priority: filterPriority,
+        pageNumber: 1,
+        limit: 100,
+        sort: 'title',
+        order: 'asc',
+      })
+    );
+    console.log(filterPriority);
+  }, [dispatch, filterPriority]);
+
+  const ListTodo = todos
+    .filter((item) => item.title.toLowerCase().includes(search.toLowerCase()))
+    .slice(0, 100);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className='custom-container mt-26 max-w-150 pt-5 pb-40'>
+      <div className='flex-center w-full flex-col gap-5'>
+        {/* Title */}
+        <div className='flex-between w-full'>
+          <div className='flex flex-col gap-2'>
+            <div className='display-sm-bold'>What’s on Your Plan Today?</div>
+            <div className='text-md-regular'>Your productivity starts now.</div>
+          </div>
+          <div className='flex items-center gap-2 rounded-2xl border border-neutral-900 bg-neutral-950 p-2'>
+            <button
+              className='bg-primary-100 rounded-xl p-1.5'
+              onClick={() => {
+                setTheme('light');
+              }}
+            >
+              <Sun size={20} />
+            </button>
+            <button
+              className='bg-primary-100 rounded-xl p-1.5'
+              onClick={() => setTheme('dark')}
+            >
+              <MoonIcon size={20} />
+            </button>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        {/* Filter */}
+        <div className='flex h-12 w-full gap-3'>
+          {/* Search */}
+          <div className='flex w-full items-center gap-2.5 rounded-2xl border border-neutral-900 px-4 py-3'>
+            <Search />
+            <input
+              value={search}
+              type='search'
+              placeholder='Search'
+              className='w-full focus:outline-none'
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          {/* Priority */}
+          <Select onValueChange={(e: TPriority) => setFilterPriority(e)}>
+            <SelectTrigger className='flex cursor-pointer flex-row items-center gap-3 rounded-2xl border border-neutral-900 px-3 py-3.5 hover:bg-neutral-900 dark:bg-transparent'>
+              <FilterIcon size={20} />
+              <div> Priority</div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem value={'aa'}>--</SelectItem>
+                {priorityLevel.map((item, index) => (
+                  <SelectItem key={index} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        {/* Today Upcoming */}
+        <div className='w-full'>
+          <Tabs defaultValue='today'>
+            <TabsList className='flex w-full rounded-2xl border-1 border-neutral-900 bg-neutral-950 p-2'>
+              <TabsTrigger className='w-full text-center' value='today'>
+                Today
+              </TabsTrigger>
+              <TabsTrigger className='w-full text-center' value='upcoming'>
+                Upcoming
+              </TabsTrigger>
+              <TabsTrigger className='w-full text-center' value='completed'>
+                Completed
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value='today'>
+              <TodayTabs todo={ListTodo} />
+            </TabsContent>
+            <TabsContent value='upcoming'>
+              <UpcomingTabs todo={ListTodo} />
+            </TabsContent>
+            <TabsContent value='completed'>
+              <CompletedTabs todo={ListTodo} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default Home;
