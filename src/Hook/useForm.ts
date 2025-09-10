@@ -3,12 +3,17 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { v4 as uuidv4 } from 'uuid';
 
-import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { useAppDispatch } from '@/app/hooks';
 import { AddTodolist } from '@/features/todos/todolistSlice/todoslistSlice';
 import { TFormScheme, formscheme } from '@/lib/validation/form';
 import { Typetodos } from '@/Services/todos';
 import { TPriority } from '@/types/todoTypes';
 
+export interface DataInput {
+  title: string;
+  date: Date;
+  priority: TPriority;
+}
 const useForms = () => {
   const [serverError, setServerError] = useState<string | null>(null);
   // const [isSuccess, setIsSuccess] = useState<boolean>(false);
@@ -16,6 +21,9 @@ const useForms = () => {
   // const [isFailed, setisFailed] = useState<boolean>(false);
   const dispatch = useAppDispatch();
   // const { todos } = useAppSelector((state) => state.todos);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [priority, setPriority] = useState<TPriority | ''>('');
+  const [date, setDate] = useState<Date>(new Date());
   const {
     register,
     formState: { errors, isSubmitting },
@@ -24,22 +32,16 @@ const useForms = () => {
     setValue,
   } = useForm<TFormScheme>({
     resolver: zodResolver(formscheme),
-    defaultValues: {
-      title: '',
-      priority: undefined, // Optional, can be undefined
-      date: new Date(), // Must be a Date object
-    },
   });
-  interface DataInput {
-    title: string;
-    date: Date;
-    priority: TPriority;
-  }
+
   const onSubmit = (data: DataInput) => {
+    if (errors) {
+      setOpenDialog(true);
+    }
     const dataSubmit: Typetodos = {
       ...data,
       priority: data.priority,
-      date: data.date.toString(),
+      date: data.date.toLocaleDateString(),
       id: uuidv4().toString(),
       completed: false,
     };
@@ -48,6 +50,9 @@ const useForms = () => {
 
     dispatch(AddTodolist(dataSubmit));
     reset();
+    setPriority('');
+    setDate(new Date());
+    setOpenDialog(false);
   };
 
   return {
@@ -59,6 +64,12 @@ const useForms = () => {
     onSubmit,
     serverError,
     setValue,
+    openDialog,
+    setOpenDialog,
+    priority,
+    setPriority,
+    date,
+    setDate,
   };
 };
 export default useForms;

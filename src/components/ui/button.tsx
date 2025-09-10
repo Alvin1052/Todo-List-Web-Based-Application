@@ -11,9 +11,12 @@ const buttonVariants = cva(
       variant: {
         default:
           'dark:bg-primary-100 dark:text-white shadow-xs hover:bg-primary-100/90',
+        ghost:
+          'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
       },
       size: {
         default: 'h-12  px-25.5 py-2.25 has-[>svg]:px-3',
+        icon: 'size-9',
       },
     },
     defaultVariants: {

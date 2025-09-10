@@ -21,34 +21,35 @@ import TodayTabs from '@/partials/today';
 import UpcomingTabs from '@/partials/upcoming';
 import { TPriority } from '@/types/todoTypes';
 
-import { useAppDispatch, useAppSelector } from './hooks';
+import { useAppDispatch } from './hooks';
 
 const Home = () => {
   const { setTheme } = useTheme();
-  const { todos } = useAppSelector((state) => state.todos);
+
   const dispatch = useAppDispatch();
 
   const [search, setSearch] = useState<string>('');
   const [filterPriority, setFilterPriority] = useState<TPriority | undefined>(
     undefined
   );
-
+  const [selectPriority, setSelectPriority] = useState<TPriority | ''>('');
   useEffect(() => {
     dispatch(
       fetchAllList({
-        priority: filterPriority,
+        priority: undefined,
         pageNumber: 1,
         limit: 100,
         sort: 'title',
         order: 'asc',
       })
     );
-    console.log(filterPriority);
-  }, [dispatch, filterPriority]);
+  }, [dispatch]);
 
-  const ListTodo = todos
-    .filter((item) => item.title.toLowerCase().includes(search.toLowerCase()))
-    .slice(0, 100);
+  useEffect(() => {
+    if (selectPriority === '') {
+      setFilterPriority(undefined);
+    }
+  }, [selectPriority]);
 
   return (
     <div className='custom-container mt-26 max-w-150 pt-5 pb-40'>
@@ -84,20 +85,20 @@ const Home = () => {
             <input
               value={search}
               type='search'
-              placeholder='Search'
+              placeholder='Search By Title'
               className='w-full focus:outline-none'
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           {/* Priority */}
-          <Select onValueChange={(e: TPriority) => setFilterPriority(e)}>
+          <Select onValueChange={(e: TPriority) => setSelectPriority(e)}>
             <SelectTrigger className='flex cursor-pointer flex-row items-center gap-3 rounded-2xl border border-neutral-900 px-3 py-3.5 hover:bg-neutral-900 dark:bg-transparent'>
               <FilterIcon size={20} />
               <div> Priority</div>
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
-                <SelectItem value={'aa'}>--</SelectItem>
+                <SelectItem value='all'>--</SelectItem>
                 {priorityLevel.map((item, index) => (
                   <SelectItem key={index} value={item}>
                     {item}
@@ -122,13 +123,22 @@ const Home = () => {
               </TabsTrigger>
             </TabsList>
             <TabsContent value='today'>
-              <TodayTabs todo={ListTodo} />
+              <TodayTabs
+                filterPriority={filterPriority}
+                filterString={search}
+              />
             </TabsContent>
             <TabsContent value='upcoming'>
-              <UpcomingTabs todo={ListTodo} />
+              <UpcomingTabs
+                filterPriority={filterPriority}
+                filterString={search}
+              />
             </TabsContent>
             <TabsContent value='completed'>
-              <CompletedTabs todo={ListTodo} />
+              <CompletedTabs
+                filterPriority={filterPriority}
+                filterString={search}
+              />
             </TabsContent>
           </Tabs>
         </div>

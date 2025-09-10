@@ -3,14 +3,23 @@ import React from 'react';
 
 import ListCard from '@/components/listcard';
 
-import { Typetodos } from '@/Services/todos';
+import { useAppSelector } from '@/app/hooks';
+import { TPriority } from '@/types/todoTypes';
 
 interface CompletedTabsProps {
-  todo: Typetodos[];
+  filterPriority: TPriority | undefined;
+  filterString: string | undefined;
 }
 
-const CompletedTabs: React.FC<CompletedTabsProps> = ({ todo }) => {
-  const ListItem = todo.filter((item) => item.completed === true);
+const CompletedTabs: React.FC<CompletedTabsProps> = ({
+  filterPriority,
+  filterString,
+}) => {
+  const { todos } = useAppSelector((state) => state.todos);
+  const ListItem = todos
+    .filter((item) => item.completed === true)
+    .filter((item) => !filterPriority || item.priority === filterPriority)
+    .filter((item) => !filterString || item.title.includes(filterString));
 
   return (
     <div className='flex w-full flex-col gap-5'>

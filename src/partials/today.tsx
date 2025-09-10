@@ -5,13 +5,9 @@ import { CalendarDaysIcon, ChevronDownIcon, Plus } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import ListCard from '@/components/listcard';
+import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import {
   Popover,
   PopoverContent,
@@ -25,22 +21,31 @@ import {
   SelectTrigger,
 } from '@/components/ui/select';
 
+import { useAppSelector } from '@/app/hooks';
 import { priorityLevel } from '@/constant/listPriority';
 import useForms from '@/Hook/useForm';
-import { Typetodos } from '@/Services/todos';
 import { TPriority } from '@/types/todoTypes';
 
 interface TodayTabsProps {
-  todo: Typetodos[];
+  filterPriority: TPriority | undefined;
+  filterString: string | undefined;
 }
 
-const TodayTabs: React.FC<TodayTabsProps> = ({ todo }) => {
-  const currentDate = format(new Date(), 'yyyy-MM-dd');
+const TodayTabs: React.FC<TodayTabsProps> = ({
+  filterPriority,
+  filterString,
+}) => {
+  const { todos } = useAppSelector((state) => state.todos);
+  const currentDate = new Date();
   console.log(currentDate);
 
-  const listItem = todo.filter(
-    (item) => format(item.date, 'yyyy-MM-dd') <= currentDate && !item.completed
-  );
+  const listItem = todos
+    .filter(
+      (item) =>
+        format(item.date, 'yyyy-MM-dd') == format(currentDate, 'yyyy-MM-dd')
+    )
+    .filter((item) => !filterPriority || item.priority === filterPriority)
+    .filter((item) => !filterString || item.title.includes(filterString));
 
   return (
     <div className='flex w-full flex-col gap-5'>
@@ -52,7 +57,9 @@ const TodayTabs: React.FC<TodayTabsProps> = ({ todo }) => {
             {listItem.length} items
           </div>
         </div>
-        <div className='text-sm-regular text-neutral-400'>{currentDate}</div>
+        <div className='text-sm-regular text-neutral-400'>
+          {format(currentDate, 'MMM d, yyyy')}
+        </div>
       </div>
       <div className='flex flex-col gap-3'>
         {/* List */}
@@ -69,10 +76,8 @@ const TodayTabs: React.FC<TodayTabsProps> = ({ todo }) => {
 
 export default TodayTabs;
 
-const AddTask = () => {
-  const [priority, setPriority] = useState<TPriority>('LOW');
-  const [date, setDate] = useState<Date>(new Date());
-  const [open, setOpen] = useState(false);
+export const AddTask = () => {
+  const [openDate, setOpenDate] = useState(false);
 
   const {
     formstate: { errors, isSubmitting },
@@ -80,7 +85,12 @@ const AddTask = () => {
     setValue,
     onSubmit,
     register,
-
+    openDialog,
+    priority,
+    setPriority,
+    date,
+    setDate,
+    setOpenDialog,
     serverError,
   } = useForms();
 
@@ -95,7 +105,7 @@ const AddTask = () => {
   }, [date, setValue]);
 
   return (
-    <Dialog>
+    <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <DialogTrigger className='flex-center bg-primary-100 w-full max-w-75 rounded-md px-3 py-2'>
         <Plus />
         <p>Add Task</p>
@@ -103,7 +113,7 @@ const AddTask = () => {
 
       <DialogContent className='w-full max-w-117'>
         <form
-          onSubmit={handleSubmit((data) => {
+          onSubmit={handleSubmit((data: any) => {
             onSubmit(data);
           })}
           className='flex flex-col gap-6'
@@ -125,7 +135,6 @@ const AddTask = () => {
             <Select
               {...register('priority')}
               onValueChange={(e: TPriority) => setPriority(e)}
-              defaultValue={'LOW'}
             >
               <SelectTrigger className='flex w-full justify-between'>
                 <div className='flex flex-col items-start'>
@@ -158,7 +167,7 @@ const AddTask = () => {
             <div className='flex-between rounded-md border border-neutral-900 px-3 py-2'>
               <div
                 className='flex flex-col gap-0'
-                onClick={() => setOpen(true)}
+                onClick={() => setOpenDate(true)}
               >
                 {date && (
                   <div className='text-xs-regular text-neutral-500'>
@@ -170,7 +179,7 @@ const AddTask = () => {
                 </div>
               </div>
 
-              <Popover open={open} onOpenChange={setOpen}>
+              <Popover open={openDate} onOpenChange={setOpenDate}>
                 <PopoverTrigger asChild>
                   <CalendarDaysIcon aria-label='Open calendar' />
                 </PopoverTrigger>
@@ -186,7 +195,7 @@ const AddTask = () => {
                       if (selectedDate) {
                         setDate(selectedDate);
                       }
-                      setOpen(false);
+                      setOpenDate(false);
                     }}
                   />
                 </PopoverContent>
@@ -200,82 +209,16 @@ const AddTask = () => {
 
             {/* Button */}
 
-            <DialogClose
+            <Button
               type='submit'
               className='bg-primary-100 text-md-semibold h-12 w-full rounded-md'
             >
               {isSubmitting ? 'Loading...' : 'Save'}
-            </DialogClose>
+            </Button>
             {serverError && <div>{serverError}</div>}
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  );
-};
-
-const PriorityList = ({ ...props }: React.ComponentProps<'select'>) => {
-  const [priority, setPriority] = useState<string | undefined>(undefined);
-  return (
-    <Select onValueChange={(e: TPriority) => setPriority(e)}>
-      <SelectTrigger className='flex w-full justify-between'>
-        <div className='flex flex-col items-start'>
-          {priority && (
-            <p className='text-xs-regular text-left text-neutral-500'>
-              Select Priority
-            </p>
-          )}
-
-          <p>{priority ? priority : 'Select Priority'}</p>
-        </div>
-        <ChevronDownIcon className='text-neutral-25 size-4' />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectGroup>
-          {priorityLevel.map((item, index) => (
-            <SelectItem key={index} value={item}>
-              <p className='text-md-regular'> {item}</p>
-            </SelectItem>
-          ))}
-        </SelectGroup>
-      </SelectContent>
-    </Select>
-  );
-};
-
-const DatePicker = () => {
-  const [date, setDate] = useState<Date | undefined>(undefined);
-  const [open, setOpen] = useState(false);
-  return (
-    <div className='flex-between rounded-md border border-neutral-900 px-3 py-2'>
-      <div className='flex flex-col gap-0'>
-        {date && (
-          <div className='text-xs-regular text-neutral-500'>Select date</div>
-        )}
-        <div className='text-md-regular' onClick={() => setOpen(true)}>
-          {date ? date.toLocaleDateString() : 'Select Date'}
-        </div>
-      </div>
-
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <CalendarDaysIcon />
-        </PopoverTrigger>
-        <PopoverContent
-          className='px-auto w-auto overflow-hidden border border-neutral-900'
-          align='center'
-        >
-          <Calendar
-            mode='single'
-            selected={date}
-            captionLayout='dropdown'
-            onSelect={(date) => {
-              setDate(date);
-              setOpen(false);
-            }}
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
   );
 };
